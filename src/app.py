@@ -17,7 +17,8 @@ sqs = boto3.client("sqs")
 
 def is_supported_image(key: str) -> bool:
     """Check if the file extension is in the allowed list."""
-    return key.lower().endswith(".jpg", ".jpeg", ".png")
+    return key.lower().endswith((".jpg", ".jpeg", ".png"))
+
 
 def build_metadata_path(input_key: str, input_prefix: str, output_prefix: str) -> str:
     """Construct the output S3 key for metadata files."""
@@ -106,14 +107,14 @@ def metadata_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 raw_data = stream.read()
                 with Image.open(BytesIO(raw_data)) as img:
                     metadata = {
-                        "source": {"bucket": bucket, "key": key, "etag": etag},
-                        "info": {
-                            "format": (img.format or "UNKNOWN").upper(),
-                            "dimensions": {"width": img.width, "height": img.height},
-                            "size_bytes": response.get("ContentLength", len(raw_data)),
-                        },
-                        "exif": extract_exif_data(img)
+                        "source_bucket": bucket,
+                        "source_key": key,
+                        "width": img.width,
+                        "height": img.height,
+                        "file_size_bytes": response.get("ContentLength", len(raw_data)),
+                        "format": (img.format or "UNKNOWN").upper(),
                     }
+
 
             s3.put_object(
                 Bucket=bucket,
